@@ -1,0 +1,12 @@
+{
+  "name": "demo-cut",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A local screen-recording editor with smooth focus zooms and MP4 export.",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test test/*.test.mjs"
+  }
+}

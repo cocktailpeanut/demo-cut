@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#13151a">
+  <title>Demo Cut</title>
+  <link rel="stylesheet" href="/style.css">
+  <script type="module" src="/editor.js"></script>
+</head>
+<body>
+<!-- THESIS: A quiet grading-room viewer for placing attention in a screen recording.
+OWN-WORLD: Charcoal surfaces, soft blue selections, fine rules, compact system sans and measured time numerals.
+STORY: Drop a recording, pause and place focus, tune its interval, preview the movement, export with audio.
+FIRST VIEWPORT: Large source viewer at left, focus inspector at right, full-width time ruler below; import centered when empty, export in the top right.
+FORM: Grading-room viewer, grounded candidate 7, seed ebae041f; user's dark minimal direction governs.
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance -->
+  <svg class="icon-defs" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs>
+    <symbol id="i-focus" viewBox="0 0 24 24"><path d="M8 3H4a1 1 0 0 0-1 1v4m13-5h4a1 1 0 0 1 1 1v4M3 16v4a1 1 0 0 0 1 1h4m8 0h4a1 1 0 0 0 1-1v-4"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V3m-5 5 5-5 5 5M4 15v5a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-5"/></symbol>
+    <symbol id="i-export" viewBox="0 0 24 24"><path d="M12 3v13m-5-5 5 5 5-5M4 17v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="m9 5 11 7-11 7z"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M5 5v14m14-14L8 12l11 7z"/></symbol>
+    <symbol id="i-volume" viewBox="0 0 24 24"><path d="m11 4-6 5H2v6h3l6 5zM15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="i-film" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 3v18M17 3v18M3 8h4m-4 8h4M17 8h4m-4 8h4"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+  </defs></svg>
+  <header class="app-header">
+    <a class="brand" href="/" aria-label="Demo Cut home"><svg><use href="#i-focus"/></svg><span>Demo Cut</span></a>
+    <div class="project-title"><span id="project-name">Untitled recording</span><span id="save-status" class="save-status">Local workspace</span></div>
+    <div class="header-actions">
+      <button id="import-button" class="button secondary" aria-label="Import video"><svg aria-hidden="true"><use href="#i-upload"/></svg><span>Import video</span></button>
+      <button id="export-button" class="button primary" disabled><svg><use href="#i-export"/></svg><span>Export MP4</span></button>
+    </div>
+  </header>
+  <input type="file" id="file-input" accept="video/*,.mkv,.mov,.mp4,.webm,.avi" hidden>
+  <main class="workspace">
+    <section class="viewer-section" aria-label="Video editor">
+      <div class="viewer-toolbar">
+        <div class="view-tabs" aria-label="Viewer mode"><button id="edit-tab" class="active" aria-pressed="true">Edit focus</button><button id="preview-tab" aria-pressed="false">Preview zooms</button></div>
+        <span id="frame-info" class="frame-info">Original frame</span>
+      </div>
+      <div id="stage" class="stage">
+        <div id="drop-zone" class="drop-zone">
+          <div class="empty-symbol"><svg><use href="#i-focus"/></svg></div>
+          <h1>Import a screen recording</h1>
+          <p>Drop a video here, then pause and click<br>the spots you want to focus on.</p>
+          <button id="choose-button" class="button primary"><svg><use href="#i-plus"/></svg>Choose a recording</button>
+          <span class="file-hint">MP4, MOV, WebM and more · up to 2 GB</span>
+        </div>
+        <div id="video-wrap" class="video-wrap" hidden>
+          <canvas id="preview" tabindex="0" role="button" aria-label="Video preview. Pause and click to add a focus point; press Enter to focus the center."></canvas>
+          <div id="markers" class="markers"></div>
+          <span id="zoom-badge" class="zoom-badge" hidden>1.0×</span>
+        </div>
+        <div id="busy-overlay" class="busy-overlay" hidden role="status"><div class="busy-content"><svg><use href="#i-film"/></svg><h2 id="busy-title">Importing recording…</h2><p id="busy-detail">Your recording stays on this computer.</p><progress id="upload-progress" max="100"></progress></div></div>
+        <div id="drag-overlay" class="drag-overlay" hidden>Drop to import your recording</div>
+      </div>
+      <div class="viewer-foot"><span id="viewer-hint">Your recording stays on this computer.</span><span id="audio-info" class="audio-info">Original audio kept</span></div>
+      <div class="transport">
+        <div class="transport-left"><button id="restart-button" class="icon-button" title="Return to start" aria-label="Return to start" disabled><svg><use href="#i-back"/></svg></button><button id="play-button" class="play-button" title="Play / pause (Space)" aria-label="Play" disabled><svg><use href="#i-play"/></svg></button><div class="time-display"><span id="current-time">00:00.00</span><span class="time-divider">/</span><span id="total-time">00:00.00</span></div></div>
+        <div class="transport-right"><button id="mute-button" class="icon-button" title="Mute preview" aria-label="Mute preview" disabled><svg><use href="#i-volume"/></svg></button><button id="add-button" class="button secondary small" disabled><svg><use href="#i-plus"/></svg>Add focus</button></div>
+      </div>
+    </section>
+    <aside class="inspector" aria-label="Focus point settings">
+      <div class="inspector-heading"><h2>Focus points</h2><span id="point-count" class="count">0</span></div>
+      <div id="point-list" class="point-list"></div>
+      <div id="point-empty" class="point-empty"><svg><use href="#i-focus"/></svg><h3>No focus points yet</h3><p>Pause your recording, then click the part you want to highlight.</p><p class="secondary-copy">Each point zooms in, holds, then eases back out.</p></div>
+      <form id="point-form" class="point-form" hidden>
+        <div class="section-heading"><h3 id="selected-title">Focus 01</h3><button type="button" id="delete-point" class="icon-button danger" aria-label="Delete selected focus point" title="Delete focus point"><svg><use href="#i-trash"/></svg></button></div>
+        <label class="range-label" for="zoom-input"><span>Zoom strength</span><output id="zoom-value">2.0×</output></label>
+        <input id="zoom-input" type="range" min="1.1" max="4" step="0.1" value="2">
+        <div class="range-extents"><span>Subtle · 1.1×</span><span>Close · 4×</span></div>
+        <div class="timing-fields"><label>Starts at <span class="number-field"><input id="time-input" type="number" min="0" step="0.1" value="0" required><span>s</span></span></label><label>Duration <span class="number-field"><input id="duration-input" type="number" min="0.2" step="0.1" value="3" required><span>s</span></span></label></div>
+        <div class="ease-info"><svg><path d="M1 21C15 21 9 3 23 3H38C52 3 46 21 60 21"/></svg><span>Smooth in & out</span></div>
+        <button type="button" id="reposition-button" class="button secondary full"><svg><use href="#i-focus"/></svg>Reposition focus</button>
+        <p id="point-error" class="field-error" role="alert" hidden></p>
+      </form>
+      <div class="output-summary"><h3>Export settings</h3><div><span>Format</span><strong>MP4 · H.264</strong></div><div><span>Frame</span><strong id="output-size">Same as source</strong></div><div><span>Audio</span><strong id="output-audio">Keep original</strong></div></div>
+    </aside>
+    <section class="timeline-section" aria-label="Recording timeline">
+      <div class="timeline-heading"><h2>Timeline</h2><span id="timeline-help">Your focus points will appear here</span><span class="shortcut-hint"><kbd>Space</kbd> Play / pause</span></div>
+      <div class="timeline-body"><div class="track-labels"><span>Recording</span><span><svg><use href="#i-focus"/></svg>Focus</span></div><div id="timeline" class="timeline"><div id="time-ruler" class="time-ruler"></div><div id="recording-track" class="recording-track"><span id="track-name">No recording yet</span></div><div id="focus-track" class="focus-track"></div><div id="playhead" class="playhead"><span></span></div><input id="scrubber" type="range" min="0" max="1" step="0.01" value="0" aria-label="Seek video" disabled></div></div>
+    </section>
+  </main>
+  <footer class="app-footer"><span><span class="status-dot"></span>Local processing</span><span id="footer-status">Ready to import</span></footer>
+  <div id="notice" class="notice" role="status" hidden><span id="notice-message"></span><button id="dismiss-notice" class="icon-button" aria-label="Dismiss message"><svg><use href="#i-close"/></svg></button></div>
+  <section id="export-panel" class="export-panel" aria-label="Export progress" hidden><div class="export-heading"><h2 id="export-title">Rendering your demo</h2><button id="cancel-export" class="button text-button">Cancel</button></div><p id="export-detail">Applying your focus points and keeping the audio.</p><progress id="export-progress" max="100" value="0"></progress><a id="download-link" class="button primary full" hidden download><svg><use href="#i-export"/></svg>Download MP4</a><button id="close-export" class="button secondary full" hidden>Done</button></section>
+  <video id="source-video" playsinline preload="auto" hidden></video>
+</body>
+</html>
